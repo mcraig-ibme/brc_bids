@@ -13,6 +13,7 @@ oxasl_bids bidsout --oxasl-output <output folder>
 
 import argparse
 import logging
+import os
 import sys
 
 from . import brc
@@ -48,9 +49,9 @@ def _parse_args(args):
 class ArgumentParser(argparse.ArgumentParser):
     def __init__(self, **kwargs):
         argparse.ArgumentParser.__init__(self, prog="brc_bids", add_help=True, **kwargs)
-        self.add_argument('--bidsdir', help="Path to BIDS data set")
-        self.add_argument('-o', '--output', help="Path to output directory. Subject directory will be created here")
-        self.add_argument('--overwrite', help="Overwrite output directory if already exists")
+        self.add_argument('--bidsdir', required=True, help="Path to BIDS data set")
+        self.add_argument('-o', '--output', required=True, help="Path to output directory. Subject directory will be created here")
+        self.add_argument('--overwrite', action="store_true", default=False, help="Overwrite output directory if already exists")
         self.add_argument('--debug', help="Enable debug logging", action='store_true')
 
 def main():
@@ -59,6 +60,10 @@ def main():
     #custom_args = _parse_args(remainder)
 
     _setup_logging(args)
+    if os.path.exists(args.output) and not args.overwrite:
+            raise ValueError(f"Output directory {args.output} already exists - use --overwrite to ignore")
+    os.makedirs(args.output, exist_ok=True)
+
     brc.run(args.bidsdir, args.output)
 
 def _setup_logging(args):
