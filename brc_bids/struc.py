@@ -6,9 +6,9 @@ import subprocess
 
 LOG = logging.getLogger(__name__)
 
-def run_struc(subject, session, data_files, outdir):
-    t1s = data_files["T1w"]
-    t2s = data_files["T2w"]
+def run(subject, session, data_files, outdir):
+    t1s = data_files.get("T1w", [])
+    t2s = data_files.get("T2w", [])
     if len(t1s) == 0:
         raise RuntimeError(f"Cannot run structural pipeline for subject {subject} session {session} - no T1w image found")
     if len(t1s) > 1:
@@ -21,9 +21,9 @@ def run_struc(subject, session, data_files, outdir):
         LOG.warn(f"More than one T2w image found for subject {subject} session {session}: {t2s} - using first")
     t2 = t2s[0]
 
-    cmd = ['struc_preproc.sh', '--input', t1, '--path', outdir, '--subject', f'{subject}_{session}']
+    cmd = ['struc_preproc.sh', '--input', t1.path, '--path', outdir, '--subject', f'{subject}_{session}']
     if t2:
-        cmd += ['--t2', t2]
+        cmd += ['--t2', t2.path]
     LOG.info(" ".join(cmd))
     stdout = subprocess.check_output(cmd)
     stdout = stdout.decode("UTF-8")
