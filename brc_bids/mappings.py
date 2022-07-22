@@ -23,7 +23,7 @@ def _calc_slicedt(js_dict, options):
         dts = [ pair[0]-pair[1] for pair in zip(times[1:], times[:-1]) ] 
         return sum(dts) / len(dts)
 
-def _interpret_pedir_oxasl(js_dict, options):
+def _interpret_pedir(js_dict, options):
     dir_map = {"i" : "x", "j" : "y", "k" : "z"}
     pedir = js_dict['PhaseEncodingDirection']
     oxasl_pedir = dir_map[pedir.strip("-")]
@@ -102,14 +102,14 @@ METADATA_MAPPINGS = {
         # Distortion correction options
         ('echospacing', "EffectiveEchoSpacing"),
         ('totalreadouttime', "TotalReadoutTime"),
-        ('pedir', _interpret_pedir_oxasl),
+        ('pedir', _interpret_pedir),
         (None, _postproc_cblip),
     ],
 
     "dwi" : [
         # DWI data options
         ('echospacing', "EffectiveEchoSpacing"),
-        #('pedir', _interpret_pedir),
+        ('pedir', _interpret_pedir),
     ]
 }
 
