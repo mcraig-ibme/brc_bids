@@ -7,7 +7,7 @@ import bids
 
 LOG = logging.getLogger(__name__)
 
-from . import struc, idps
+from . import struc, idps, dwi
 
 def get_image_files(layout):
     """
@@ -29,7 +29,7 @@ def get_image_files(layout):
         for sess in sessions:
             LOG.info("Getting ASL data for subject %s in session %s" % (subj, sess))
             data_files[subj][sess] = {}
-            for suffix in ("asl", "m0scan", "T1w", "T2w", "dti"):
+            for suffix in ("asl", "m0scan", "T1w", "T2w", "dwi"):
                 data_files[subj][sess][suffix] = []
                 for fobj in layout.get(subject=subj, session=sess, suffix=suffix):
                     if isinstance(fobj, bids.layout.models.BIDSImageFile):
@@ -48,9 +48,9 @@ def run(bidsdir, outdir):
 
             # Note structural pipeline will throw exception if no T1 image available - this is fine because structural
             # processing is required for the rest of the pipeline
-            struc.run(data_files, subject, session, outdir)
-            #run_perf(data_files)
-            #run_dti(data_files)
+            struc.run(subject, session, data_files, outdir)
+            dwi.run(subject, session, data_files, outdir)
+            #perf.run(subject, session, data_files, outdir)
             subjdirs.append(f"{subject}_{session}")
     idps.run(subjdirs, outdir)
     #run_qc_extract(subjdirs, outdir)
