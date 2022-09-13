@@ -6,7 +6,9 @@ import subprocess
 
 LOG = logging.getLogger(__name__)
 
-def run(subject, session, data_files, outdir):
+from . import utils
+
+def run(subject, session, data_files, outdir, cluster=False, dep_job=None):
     t1s = data_files.get("T1w", [])
     t2s = data_files.get("T2w", [])
     if len(t1s) == 0:
@@ -24,7 +26,5 @@ def run(subject, session, data_files, outdir):
     cmd = ['struc_preproc.sh', '--input', t1.path, '--path', outdir, '--subject', f'{subject}_{session}']
     if t2:
         cmd += ['--t2', t2.path]
-    LOG.info(" ".join(cmd))
-    stdout = subprocess.check_output(cmd)
-    stdout = stdout.decode("UTF-8")
-    LOG.debug(stdout)
+
+    return utils.submit_cmd(cmd, cluster, dep_job)
