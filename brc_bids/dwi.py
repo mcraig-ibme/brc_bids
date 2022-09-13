@@ -6,12 +6,12 @@ import subprocess
 
 LOG = logging.getLogger(__name__)
 
-from . import mappings
+from . import mappings, utils
 
-def run(subject, session, data_files, outdir):
+def run(subject, session, data_files, outdir, cluster=False, dep_job=None):
     dwis = data_files.get("dwi", [])
     if not dwis:
-        LOG.info("No DWI files found - will not run diffusion pipelie")
+        LOG.info("No DWI files found - will not run diffusion pipeline")
         return
 
     # Get the echo spacing and PE dir from the metadata
@@ -54,7 +54,4 @@ def run(subject, session, data_files, outdir):
     if rev_fnames:
         cmd.extend(["--input_2", rev_fnames])
 
-    LOG.info(" ".join(cmd))
-    #stdout = subprocess.check_output(cmd)
-    #stdout = stdout.decode("UTF-8")
-    #LOG.debug(stdout)
+    return utils.submit_cmd(cmd, cluster, dep_job)

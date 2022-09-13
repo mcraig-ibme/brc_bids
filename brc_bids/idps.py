@@ -7,7 +7,7 @@ import subprocess
 
 LOG = logging.getLogger(__name__)
 
-def run(subjdirs, outdir):
+def run(subjdirs, outdir, cluster=False, dep_job=None):
     subjfile = os.path.join(outdir, "subjs.txt")
     with open(subjfile, "w") as f:
         for subjdir in subjdirs:
@@ -15,6 +15,6 @@ def run(subjdirs, outdir):
     idpdir = os.path.join(outdir, 'idps')
     cmd = ['idp_extract.sh', '--in', subjfile, '--indir', outdir, '--outdir', idpdir]
     LOG.info(" ".join(cmd))
-    stdout = subprocess.check_output(cmd)
-    stdout = stdout.decode("UTF-8")
-    LOG.debug(stdout)
+    #stdout = subprocess.check_output(cmd)
+    #stdout = stdout.decode("UTF-8")
+    #LOG.debug(stdout)
