@@ -3,8 +3,41 @@ OXASL_BIDS: Miscellaneous utilities
 """
 import json
 import os
+import logging
+import subprocess
 
 import nibabel as nib
+
+LOG = logging.getLogger(__name__)
+
+def get_job_id(stdout):
+    """
+    Get last job ID submitted by a command
+    """
+    last_id = None
+    for line in stdout.splitlines():
+        if "jobid" in line.lower():
+            last_id = line.split(":")[1].strip()
+    return last_id
+
+def submit_cmd(cmd, cluster, dep_job):
+    if cluster:
+        sub_cmd = ["fsl_sub", "-T", "5"]
+        if dep_job:
+            LOG.info(f"Dep job={dep_job}")
+            sub_cmd.extend(["-j", dep_job])
+        sub_cmd.extend(cmd)
+        LOG.info(" ".join(sub_cmd))
+        stdout = subprocess.check_output(sub_cmd)
+        stdout = stdout.decode("UTF-8")
+        LOG.debug(stdout)
+        return stdout.strip()
+    else:
+        LOG.info(" ".join(cmd))
+        stdout = subprocess.check_output(cmd)
+        stdout = stdout.decode("UTF-8")
+        LOG.debug(stdout)
+        return get_job_id(stdout)
 
 def bids_filename(suffix, subject, session, labeldict=None):
     """
