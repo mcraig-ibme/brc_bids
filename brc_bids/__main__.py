@@ -18,8 +18,6 @@ import sys
 
 from . import brc
 
-LOG = logging.getLogger(__name__)
-
 def _parse_args(args):
     # FIXME not used at present
     ret = {}
@@ -51,6 +49,8 @@ class ArgumentParser(argparse.ArgumentParser):
         argparse.ArgumentParser.__init__(self, prog="brc_bids", add_help=True, **kwargs)
         self.add_argument('--bidsdir', required=True, help="Path to BIDS data set")
         self.add_argument('-o', '--output', required=True, help="Path to output directory. Subject directory will be created here")
+        self.add_argument('--mriqc', action="store_true", default=False, help="Include MRIQC processing")
+        self.add_argument('--cluster', action="store_true", default=None, help="Force cluster mode (fsl_sub) - defaults to $CLUSTER_MODE == YES")
         self.add_argument('--overwrite', action="store_true", default=False, help="Overwrite output directory if already exists")
         self.add_argument('--debug', help="Enable debug logging", action='store_true')
 
@@ -64,7 +64,9 @@ def main():
             raise ValueError(f"Output directory {args.output} already exists - use --overwrite to ignore")
     os.makedirs(args.output, exist_ok=True)
 
-    brc.run(args.bidsdir, args.output)
+    if args.cluster is None:
+        args.cluster = os.environ.get("CLUSTER_MODE", "NO") == "YES"
+    brc.run(args)
 
 def _setup_logging(args):
     if args.debug:
