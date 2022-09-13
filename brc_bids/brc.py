@@ -2,12 +2,13 @@
 BRC_BIDS: Script to run the BRC pipeline from a BIDS dataset
 """
 import logging
+import os
 
 import bids
 
 LOG = logging.getLogger(__name__)
 
-from . import struc, idps, dwi
+from . import struc, idps, dwi, mriqc
 
 def get_image_files(layout):
     """
@@ -17,7 +18,7 @@ def get_image_files(layout):
 
     :return dict mapping subjects to a group of sessions. The session group is a dict mapping
             session ID to session dict. Each session is a dict mapping file suffixes asl, m0scan, 
-            and T1w to lists of corresponding BIDSImageFile instances
+            T1w, T2w and dwi to lists of corresponding BIDSImageFile instances
     """
     data_files = {}
     for subj in layout.get_subjects():
@@ -27,31 +28,38 @@ def get_image_files(layout):
             # Deal with case where there is no session level
             sessions = [None]
         for sess in sessions:
-            LOG.info("Getting ASL data for subject %s in session %s" % (subj, sess))
+            LOG.info(f"Getting BIDS images for subject {subj} in session {sess}")
             data_files[subj][sess] = {}
             for suffix in ("asl", "m0scan", "T1w", "T2w", "dwi"):
                 data_files[subj][sess][suffix] = []
                 for fobj in layout.get(subject=subj, session=sess, suffix=suffix):
                     if isinstance(fobj, bids.layout.models.BIDSImageFile):
-                        LOG.debug("Found %s image: %s %s" % (suffix.upper(), fobj.filename, fobj.entities["suffix"]))
+                        LOG.debug(f"Found {suffix.upper()} image: {fobj.filename} {fobj.entities['suffix']}")
                         data_files[subj][sess][suffix].append(fobj)
 
     return data_files
 
-def run(bidsdir, outdir):
-    layout = bids.BIDSLayout(bidsdir)
-    image_files = get_image_files(layout)
+def run(args):
+    LOG.info("BRC-BIDS")
+    LOG.info(f"Cluster mode: {args.cluster}")
+    layout = bids.BIDSLayout(args.bidsdir)
 
-    subjdirs = []
+    if args.mriqc:
+        # MRIQC is a BIDS application independent of the rest of the BRC pipeline
+        LOG.info(f"Running MRIQC on dataset")
+        mriqc.run(args.bidsdir, args.output, cluster=args.cluster)
+
+    image_files = get_image_files(layout)
+    subjdirs, last_job = [], None
     for subject, sessions in image_files.items():
         for session, data_files in sessions.items():
 
             # Note structural pipeline will throw exception if no T1 image available - this is fine because structural
             # processing is required for the rest of the pipeline
-            struc.run(subject, session, data_files, outdir)
-            dwi.run(subject, session, data_files, outdir)
-            #perf.run(subject, session, data_files, outdir)
+            last_job = struc.run(subject, session, data_files, args.output, cluster=args.cluster)
+            #last_job = dwi.run(subject, session, data_files, output, cluster=args.cluster, dep_job=struc_job)
+            #perf.run(subject, session, data_files, output)
             subjdirs.append(f"{subject}_{session}")
-    idps.run(subjdirs, outdir)
-    #run_qc_extract(subjdirs, outdir)
 
+    #idps.run(subjdirs, output, cluster=cluster, dep_job=last_job)
+    #qc.run(subjdirs, output)
