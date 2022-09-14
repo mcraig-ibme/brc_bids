@@ -20,12 +20,16 @@ def get_job_id(stdout):
             last_id = line.split(":")[1].strip()
     return last_id
 
-def submit_cmd(cmd, cluster, dep_job):
+def submit_cmd(cmd, cluster, dep_job, minutes=5, ram=None):
     if cluster:
-        sub_cmd = ["fsl_sub", "-T", "5"]
+        sub_cmd = ["fsl_sub", "-T", str(minutes)]
         if dep_job:
             LOG.info(f"Dep job={dep_job}")
             sub_cmd.extend(["-j", dep_job])
+        if ram:
+            LOG.info(f"RAM={ram} Mb")
+            sub_cmd.extend(["-R", str(ram)])
+
         sub_cmd.extend(cmd)
         LOG.info(" ".join(sub_cmd))
         stdout = subprocess.check_output(sub_cmd)

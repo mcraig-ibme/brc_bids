@@ -12,4 +12,4 @@ SINGULARITY_IMAGE="/software/imaging/singularity_images/poldracklab_mriqc-2021-0
 
 def run(bidsdir, outdir, cluster=False, dep_job=None):
     cmd = ['singularity', 'run', '--cleanenv', SINGULARITY_IMAGE, bidsdir, outdir, 'participant', '--no-sub']
-    return utils.submit_cmd(cmd, cluster, dep_job)
+    return utils.submit_cmd(cmd, cluster, dep_job, minutes=600, ram=64000)
